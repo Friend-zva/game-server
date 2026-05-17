@@ -7,9 +7,11 @@ import (
 type Player struct {
 	Id           int
 	State        StatePlayer
-	CurrentFloor int
+	FloorCurrent int
 	Health       int
-	BossDefeated bool
+
+	EnteredDungeon bool
+	BossDefeated   bool
 
 	MonstersKilled map[int]int
 	FloorsCleared  map[int]bool
@@ -25,8 +27,9 @@ func NewPlayer(id int, timeEnter time.Time) *Player {
 	return &Player{
 		Id:               id,
 		State:            StatePlayerPlaying,
-		CurrentFloor:     1,
-		Health:           100,
+		FloorCurrent:     1,
+		Health:           HealthMax,
+		EnteredDungeon:   false,
 		BossDefeated:     false,
 		MonstersKilled:   make(map[int]int),
 		FloorsCleared:    make(map[int]bool),
@@ -38,7 +41,15 @@ func NewPlayer(id int, timeEnter time.Time) *Player {
 	}
 }
 
-func (p *Player) TakeDamage(amount int) []EventOutgoingID {
+func (p *Player) RestoreHealth(amount int) {
+	p.Health += amount
+
+	if p.Health > HealthMax {
+		p.Health = HealthMax
+	}
+}
+
+func (p *Player) ReceiveDamage(amount int) []EventOutgoingID {
 	p.Health -= amount
 
 	var events []EventOutgoingID

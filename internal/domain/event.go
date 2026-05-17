@@ -8,7 +8,7 @@ const (
 	EventIncomingEnterDungeon   EventIncomingID = 2
 	EventIncomingKillMonster    EventIncomingID = 3
 	EventIncomingNextFloor      EventIncomingID = 4
-	EventIncomingPreviousFloor  EventIncomingID = 5
+	EventIncomingPrevFloor      EventIncomingID = 5
 	EventIncomingEnterBossFloor EventIncomingID = 6
 	EventIncomingKillBoss       EventIncomingID = 7
 	EventIncomingLeaveDungeon   EventIncomingID = 8

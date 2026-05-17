@@ -37,3 +37,17 @@ func NewPlayer(id int, timeEnter time.Time) *Player {
 		TimeBossKill:     0,
 	}
 }
+
+func (p *Player) TakeDamage(amount int) []EventOutgoingID {
+	p.Health -= amount
+
+	var events []EventOutgoingID
+
+	if p.Health <= 0 {
+		p.Health = 0
+		p.State = StatePlayerFail
+		events = append(events, EventOutgoingDead)
+	}
+
+	return events
+}

@@ -11,7 +11,7 @@ import (
 	domain "github.com/Friend-zva/game-server/internal/domain"
 )
 
-type GameManager interface {
+type ManagerGame interface {
 	ProcessEvent(
 		time time.Time, idPlayer int, idEvent domain.EventIncomingID, param string,
 	) error
@@ -19,14 +19,14 @@ type GameManager interface {
 
 type parser struct {
 	logger      *slog.Logger
-	gameManager GameManager
+	managerGame ManagerGame
 	formatTime  string
 }
 
-func NewParser(logger *slog.Logger, gameManager GameManager, formatTime string) *parser {
+func NewParser(logger *slog.Logger, managerGame ManagerGame, formatTime string) *parser {
 	return &parser{
 		logger:      logger,
-		gameManager: gameManager,
+		managerGame: managerGame,
 		formatTime:  formatTime,
 	}
 }
@@ -78,9 +78,9 @@ func (p *parser) Run(pathEvents string) error {
 		}
 
 		idEvent := domain.EventIncomingID(event)
-		err = p.gameManager.ProcessEvent(time, idPlayer, idEvent, param)
+		err = p.managerGame.ProcessEvent(time, idPlayer, idEvent, param)
 		if err != nil {
-			p.logger.Error("failed to exec event", "error", err)
+			p.logger.Debug("failed to exec event", "error", err)
 			continue
 		}
 	}

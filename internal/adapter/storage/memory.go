@@ -4,20 +4,20 @@ import (
 	domain "github.com/Friend-zva/game-server/internal/domain"
 )
 
-type memoryStorage struct {
+type storageMemory struct {
 	players map[int]*domain.Player
 }
 
-func NewMemoryStorage() *memoryStorage {
-	return &memoryStorage{
+func NewStorageMemory() *storageMemory {
+	return &storageMemory{
 		players: make(map[int]*domain.Player),
 	}
 }
 
-func (r *memoryStorage) Get(id int) *domain.Player {
-	return r.players[id]
+func (s *storageMemory) Get(id int) *domain.Player {
+	return s.players[id]
 }
 
-func (r *memoryStorage) Save(player *domain.Player) {
-	r.players[player.Id] = player
+func (s *storageMemory) Save(player *domain.Player) {
+	s.players[player.Id] = player
 }

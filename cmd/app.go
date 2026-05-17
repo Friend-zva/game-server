@@ -4,32 +4,47 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
+	config "github.com/Friend-zva/game-server/config"
 	presenter "github.com/Friend-zva/game-server/internal/adapter/presenter"
 	storage "github.com/Friend-zva/game-server/internal/adapter/storage"
 	clicontroller "github.com/Friend-zva/game-server/internal/controller/cli"
+	domain "github.com/Friend-zva/game-server/internal/domain"
 	usecase "github.com/Friend-zva/game-server/internal/usecase"
 	logger "github.com/Friend-zva/game-server/platform/logger"
 )
 
 func run() error {
 	var pathConfig, pathEvents string
-	flag.StringVar(&pathConfig, "config", "config.json", "game configuration file")
+	flag.StringVar(&pathConfig, "config", "config/config.json", "game configuration file")
 	flag.StringVar(&pathEvents, "events", "events", "events file")
 	flag.Parse()
-	// cfg := config.MustLoad(pathConfig)
+	cfg := config.MustLoad(pathConfig)
 
-	logger := logger.MustMakeLogger("INFO")
+	logger := logger.MustMakeLogger("DEBUG")
 	logger.Debug("debug messages are enabled")
 
 	formatTime := "15:04:05"
 
-	repo := storage.NewMemoryStorage()
-	presenter := presenter.NewCLIPresenter(formatTime)
-	gameManager := usecase.NewGameManager(repo, presenter)
+	timeOpenAt, err := time.Parse(formatTime, cfg.OpenAt)
+	if err != nil {
+		return fmt.Errorf("cannot parse game config: %w", err)
+	}
 
-	app := clicontroller.NewParser(logger, gameManager, formatTime)
-	err := app.Run(pathEvents)
+	configGame := domain.ConfigGame{
+		CountFloors:            cfg.Floors,
+		CountMonstersPerFloors: cfg.Monsters,
+		TimeOpenAt:             timeOpenAt,
+		HoursDuration:          cfg.Duration,
+	}
+
+	storage := storage.NewStorageMemory()
+	presenter := presenter.NewPresenterCLI(formatTime)
+	managerGame := usecase.NewManagerGame(storage, presenter, configGame)
+
+	app := clicontroller.NewParser(logger, managerGame, formatTime)
+	err = app.Run(pathEvents)
 	if err != nil {
 		return fmt.Errorf("cannot run game: %w", err)
 	}

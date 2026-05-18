@@ -104,7 +104,7 @@ func (p *presenterCLI) ShowReportPlayer(
 	timeTotal, timeAvgFloor, timeBoss time.Duration,
 	health int,
 ) {
-	fmt.Printf("[%s] %d [%s, %s, %s] HP:%d \n", state, idPlayer,
+	fmt.Printf("[%s] %d [%s, %s, %s] HP:%d\n", state, idPlayer,
 		formatDuration(timeTotal), formatDuration(timeAvgFloor), formatDuration(timeBoss),
 		health,
 	)

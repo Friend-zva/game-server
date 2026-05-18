@@ -22,7 +22,7 @@ func run() error {
 	flag.Parse()
 	cfg := config.MustLoad(pathConfig)
 
-	logger := logger.MustMakeLogger("DEBUG")
+	logger := logger.MustMakeLogger("ERROR")
 	logger.Debug("debug messages are enabled")
 
 	formatTime := "15:04:05"

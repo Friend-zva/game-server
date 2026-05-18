@@ -23,13 +23,20 @@ A player is participating in a challenge. The goal is to completely clear a dung
 6.  A floor is considered complete when all monsters or the boss have been killed; **_any time spent in that floor is no longer counted_**
 7.  The player's health cannot exceed 100
 
+## Usage
+
+```sh
+go build -v -o ./bin/app ./cmd/app.go
+./bin/app
+```
+
 ## Events
 
 - All events occur sequentially in time. (**_Time of event N+1_**) >= (**_Time of event N_**)
 - Time format **_[HH:MM:SS]_**. Trailing zeros are required in input and output
 - The **_ExtraParam_** parameter can be a string containing multiple words.
 
-#### Incoming events
+### Incoming events
 
 | EventID | ExtraParam | Comment                                         |
 | ------- | :--------: | ----------------------------------------------- |
@@ -45,7 +52,9 @@ A player is participating in a challenge. The goal is to completely clear a dung
 | 10      |  `health`  | Player [`id`] has restored [`health`] of health |
 | 11      |  `damage`  | Player [`id`] recieved [`damage`] of damage     |
 
-#### Outgoing events
+> For example see [events](./events).
+
+### Outgoing events
 
 | EventID | ExtraParam | Comment                                        |
 | ------- | :--------: | ---------------------------------------------- |
@@ -53,73 +62,7 @@ A player is participating in a challenge. The goal is to completely clear a dung
 | 32      |            | Player [`id`] is dead                          |
 | 33      |            | Player [`id`] makes imposible move [`eventID`] |
 
-#### Example
-
-```
-[14:00:00] 1 1
-[14:00:00] 2 1
-[14:10:00] 2 2
-[14:10:00] 3 2
-[14:11:00] 2 5
-[14:12:00] 3 3
-[14:14:00] 2 3
-[14:27:00] 2 11 60
-[14:29:00] 2 11 50
-[14:40:00] 1 2
-[14:41:00] 1 3
-[14:44:00] 1 11 50
-[14:45:00] 1 3
-[14:48:00] 1 4
-[14:48:00] 1 6
-[14:49:00] 1 11 25
-[14:49:02] 1 10 80
-[14:50:00] 1 11 65
-[14:59:00] 1 7
-[15:04:00] 1 8
-```
-
-#### Output
-
-```
-[14:00:00] Player [1] registered
-[14:00:00] Player [2] registered
-[14:10:00] Player [2] entered the dungeon
-[14:10:00] Player [3] is disqualified
-[14:11:00] Player [2] makes imposible move [5]
-[14:14:00] Player [2] killed the monster
-[14:27:00] Player [2] recieved [60] of damage
-[14:29:00] Player [2] recieved [50] of damage
-[14:29:00] Player [2] is dead
-[14:40:00] Player [1] entered the dungeon
-[14:41:00] Player [1] killed the monster
-[14:44:00] Player [1] recieved [50] of damage
-[14:45:00] Player [1] killed the monster
-[14:48:00] Player [1] went to the next floor
-[14:48:00] Player [1] entered the boss's floor
-[14:49:00] Player [1] recieved [25] of damage
-[14:49:02] Player [1] has restored [80] of health
-[14:50:00] Player [1] recieved [65] of damage
-[14:59:00] Player [1] killed the boss
-[15:04:00] Player [1] left the dungeon
-```
-
-## Configuration (json)
-
-- **Floors** - Number of floors in the dungeon
-- **Monsters** - Number of monsters on each floor of the dungeon
-- **OpenAt** - Dungeon opening time
-- **Duration** - Time until the dungeon closes in hours
-
-#### Example
-
-```
-{
-    "Floors": 2,
-    "Monsters": 2,
-    "OpenAt": "14:05:00",
-    "Duration": 2
-}
-```
+> For example, see [events_expected](./events_expected).
 
 ## States
 
@@ -138,14 +81,16 @@ A player is participating in a challenge. The goal is to completely clear a dung
 5.  Time to kill the boss
 6.  Player health at the end of the trial
 
-#### Example
+> For example, see [events_expected](./events_expected).
 
-```
-Final report:
-[SUCCESS] 1 [00:24:00, 00:05:00, 00:11:00] HP:35
-[FAIL] 2 [00:19:00, 00:00:00, 00:00:00] HP:0
-[DISQUAL] 3 [00:00:00, 00:00:00, 00:00:00] HP:100
-```
+## Configuration (json)
+
+- **Floors** - Number of floors in the dungeon
+- **Monsters** - Number of monsters on each floor of the dungeon
+- **OpenAt** - Dungeon opening time
+- **Duration** - Time until the dungeon closes in hours
+
+> For example, see [config](./config/config.json).
 
 ## LICENSE
 

@@ -9,7 +9,7 @@ import (
 	config "github.com/Friend-zva/game-server/config"
 	presenter "github.com/Friend-zva/game-server/internal/adapter/presenter"
 	storage "github.com/Friend-zva/game-server/internal/adapter/storage"
-	clicontroller "github.com/Friend-zva/game-server/internal/controller/cli"
+	clirunner "github.com/Friend-zva/game-server/internal/controller/cli"
 	domain "github.com/Friend-zva/game-server/internal/domain"
 	usecase "github.com/Friend-zva/game-server/internal/usecase"
 	logger "github.com/Friend-zva/game-server/platform/logger"
@@ -44,8 +44,8 @@ func run() error {
 	presenter := presenter.NewPresenterCLI(formatTime, os.Stdout)
 	managerGame := usecase.NewManagerGame(storage, presenter, configGame)
 
-	app := clicontroller.NewParser(logger, managerGame, formatTime)
-	err = app.Run(pathEvents)
+	runner := clirunner.NewRunnerGame(logger, managerGame, formatTime)
+	err = runner.Execute(pathEvents)
 	if err != nil {
 		return fmt.Errorf("cannot run game: %w", err)
 	}

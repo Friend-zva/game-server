@@ -41,7 +41,7 @@ func run() error {
 	}
 
 	storage := storage.NewStorageMemory()
-	presenter := presenter.NewPresenterCLI(formatTime)
+	presenter := presenter.NewPresenterCLI(formatTime, os.Stdout)
 	managerGame := usecase.NewManagerGame(storage, presenter, configGame)
 
 	app := clicontroller.NewParser(logger, managerGame, formatTime)

@@ -10,6 +10,7 @@ const HealthMax = 100
 type ConfigGame struct {
 	CountFloors            int
 	CountMonstersPerFloors int
-	TimeOpenAt             time.Time
+	TimeOpened             time.Time
+	TimeClosed             time.Time
 	HoursDuration          int
 }

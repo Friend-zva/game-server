@@ -35,7 +35,8 @@ func run() error {
 	configGame := domain.ConfigGame{
 		CountFloors:            cfg.Floors,
 		CountMonstersPerFloors: cfg.Monsters,
-		TimeOpenAt:             timeOpenAt,
+		TimeOpened:             timeOpenAt,
+		TimeClosed:             timeOpenAt.Add(time.Duration(cfg.Duration) * time.Hour),
 		HoursDuration:          cfg.Duration,
 	}
 

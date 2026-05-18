@@ -10,34 +10,25 @@ type Player struct {
 	FloorCurrent int
 	Health       int
 
-	EnteredDungeon bool
-	BossDefeated   bool
-
-	MonstersKilled map[int]int
-	FloorsCleared  map[int]bool
+	FloorsMonsters []FloorMonsters
+	FloorBoss      Floor
 
 	TimeEnterDungeon time.Time
 	TimeLeaveDungeon time.Time
-	TimeFloorEnter   map[int]time.Time
-	TimeFloorClear   map[int]time.Duration
-	TimeBossKill     time.Duration
 }
 
-func NewPlayer(id int, timeEnter time.Time) *Player {
+func NewPlayer(id, countFloors int) *Player {
+	floors := make([]FloorMonsters, countFloors)
+
 	return &Player{
 		Id:               id,
 		State:            StatePlayerPlaying,
 		FloorCurrent:     1,
 		Health:           HealthMax,
-		EnteredDungeon:   false,
-		BossDefeated:     false,
-		MonstersKilled:   make(map[int]int),
-		FloorsCleared:    make(map[int]bool),
-		TimeEnterDungeon: timeEnter,
+		FloorsMonsters:   floors,
+		FloorBoss:        Floor{},
+		TimeEnterDungeon: time.Time{},
 		TimeLeaveDungeon: time.Time{},
-		TimeFloorEnter:   make(map[int]time.Time),
-		TimeFloorClear:   make(map[int]time.Duration),
-		TimeBossKill:     0,
 	}
 }
 

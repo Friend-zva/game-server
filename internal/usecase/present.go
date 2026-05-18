@@ -18,5 +18,5 @@ type Presenter interface {
 	ShowReceivedDamage(time time.Time, idPlayer, amount int)        // 11
 	ShowDisqualified(time time.Time, idPlayer int)                  // 31
 	ShowDead(time time.Time, idPlayer int)                          // 32
-	ShowMadeImposible(time time.Time, idPlayer, idEvent int)        // 33
+	ShowMadeImpossible(time time.Time, idPlayer, idEvent int)       // 33
 }

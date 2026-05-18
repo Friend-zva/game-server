@@ -46,40 +46,43 @@ func (m *managerGame) ProcessEvent(
 	time time.Time, idPlayer int, idEvent domain.EventIncomingID, param string,
 ) error {
 	if time.After(m.config.TimeClosed) {
-		m.presenter.ShowMadeImpossible(time, idPlayer, int(idEvent))
-		return fmt.Errorf("impossible move %d", idEvent)
+		m.presenter.ShowMadeImpossible(time, idPlayer, idEvent)
+		return fmt.Errorf("impossible move %d: %w", idEvent, domain.ErrImpossibleMove)
 	}
 
 	player := m.storage.Get(idPlayer)
 	if player == nil {
-		player := domain.NewPlayer(idPlayer, m.config.CountFloors)
+		player = domain.NewPlayer(idPlayer, m.config.CountFloors)
 		m.storage.Save(player)
 
 		if idEvent == domain.EventIncomingRegisterPlayer {
 			m.presenter.ShowRegistered(time, idPlayer)
 			return nil
-		} else {
-			player.State = domain.StatePlayerDisqual
-			m.presenter.ShowDisqualified(time, idPlayer)
-			return fmt.Errorf("player not registered")
 		}
+
+		player.State = domain.StatePlayerDisqual
+		m.presenter.ShowDisqualified(time, idPlayer)
+		m.storage.Save(player)
+		return fmt.Errorf("impossible move %d: %w", idEvent, domain.ErrPlayerNotRegister)
 	}
 
 	if player.State == domain.StatePlayerDisqual {
-		return fmt.Errorf("player disqual")
+		return domain.ErrPlayerDisqual
 	}
 
 	if player.TimeEnterDungeon.IsZero() &&
 		idEvent != domain.EventIncomingEnterDungeon {
-		m.presenter.ShowMadeImpossible(time, player.Id, int(idEvent))
-		return fmt.Errorf("player not enter")
+		m.presenter.ShowMadeImpossible(time, player.Id, idEvent)
+		return fmt.Errorf("impossible move %d: %w", idEvent, domain.ErrPlayerNotEnter)
 	}
 
 	if handler, ok := m.handlers[idEvent]; ok {
-		return handler(time, player, param)
+		err := handler(time, player, param)
+		m.storage.Save(player)
+		return err
 	}
 
-	return fmt.Errorf("handler not mapped")
+	return fmt.Errorf("handler not mapped %d", idEvent)
 }
 
 func (m *managerGame) GenerateReport() {
@@ -95,12 +98,19 @@ func (m *managerGame) GenerateReport() {
 		timeTotal := p.TimeLeaveDungeon.Sub(p.TimeEnterDungeon)
 
 		timeAvgFloor := time.Duration(0)
+		countFloorsMonsters := len(p.FloorsMonsters)
+		countCleared := 0
+
 		for _, f := range p.FloorsMonsters {
 			if f.Floor.Cleared {
 				timeAvgFloor += f.Floor.TimeClear.Sub(f.Floor.TimeEnter)
+				countCleared++
 			}
 		}
-		timeAvgFloor /= time.Duration(m.config.CountFloors - 1)
+
+		if countFloorsMonsters > 0 && countCleared > 0 {
+			timeAvgFloor /= time.Duration(countFloorsMonsters)
+		}
 
 		timeBoss := p.FloorBoss.TimeClear.Sub(p.FloorBoss.TimeEnter)
 
@@ -113,23 +123,21 @@ func (m *managerGame) GenerateReport() {
 func (m *managerGame) handlerRegisterPlayer(
 	time time.Time, player *domain.Player, param string,
 ) error {
-	player.State = domain.StatePlayerDisqual
-	m.presenter.ShowDisqualified(time, player.Id)
-	return fmt.Errorf("player not registered")
+	idEvent := domain.EventIncomingRegisterPlayer
+	m.presenter.ShowMadeImpossible(time, player.Id, idEvent)
+	return domain.ErrImpossibleMove
 }
 
 func (m *managerGame) handleEnterDungeon(
 	time time.Time, player *domain.Player, param string,
 ) error {
-	if !player.TimeEnterDungeon.IsZero() || time.Before(m.config.TimeOpened) {
-		m.presenter.ShowMadeImpossible(
-			time, player.Id, int(domain.EventIncomingEnterDungeon),
-		)
-		return fmt.Errorf("impossible move %d", domain.EventIncomingEnterDungeon)
+	err := player.EnterDungeon(time, m.config.TimeOpened)
+	if err != nil {
+		idEvent := domain.EventIncomingEnterDungeon
+		m.presenter.ShowMadeImpossible(time, player.Id, idEvent)
+		return fmt.Errorf("impossible move %d: %w", idEvent, err)
 	}
 
-	player.TimeEnterDungeon = time
-	player.FloorsMonsters[player.FloorCurrent-1].Floor.TimeEnter = time
 	m.presenter.ShowEnteredDungeon(time, player.Id)
 	return nil
 }
@@ -137,19 +145,11 @@ func (m *managerGame) handleEnterDungeon(
 func (m *managerGame) handleLeaveDungeon(
 	time time.Time, player *domain.Player, param string,
 ) error {
-	if player.TimeEnterDungeon.IsZero() {
-		m.presenter.ShowMadeImpossible(
-			time, player.Id, int(domain.EventIncomingLeaveDungeon),
-		)
-		return fmt.Errorf("impossible move %d", domain.EventIncomingLeaveDungeon)
-	}
-
-	player.TimeLeaveDungeon = time
-
-	if player.FloorBoss.Cleared {
-		player.State = domain.StatePlayerSuccess
-	} else {
-		player.State = domain.StatePlayerFail
+	err := player.LeaveDungeon(time)
+	if err != nil {
+		idEvent := domain.EventIncomingLeaveDungeon
+		m.presenter.ShowMadeImpossible(time, player.Id, idEvent)
+		return fmt.Errorf("impossible move %d: %w", idEvent, err)
 	}
 
 	m.presenter.ShowLeftDungeon(time, player.Id)
@@ -159,24 +159,11 @@ func (m *managerGame) handleLeaveDungeon(
 func (m *managerGame) handleNextFloor(
 	time time.Time, player *domain.Player, param string,
 ) error {
-	if player.FloorCurrent == m.config.CountFloors {
-		m.presenter.ShowMadeImpossible(
-			time, player.Id, int(domain.EventIncomingNextFloor),
-		)
-		return fmt.Errorf("impossible move %d", domain.EventIncomingNextFloor)
-	}
-
-	player.FloorCurrent++
-	var floor *domain.Floor
-	if player.FloorCurrent != m.config.CountFloors {
-		floor = &(player.FloorsMonsters[player.FloorCurrent-1].Floor)
-	} else {
-		floor = &(player.FloorBoss)
-	}
-
-	timeEnter := &(floor.TimeEnter)
-	if (*timeEnter).IsZero() {
-		*timeEnter = time
+	err := player.NextFloor(time, m.config.CountFloors)
+	if err != nil {
+		idEvent := domain.EventIncomingNextFloor
+		m.presenter.ShowMadeImpossible(time, player.Id, idEvent)
+		return fmt.Errorf("impossible move %d: %w", idEvent, err)
 	}
 
 	m.presenter.ShowWentToFloorNext(time, player.Id)
@@ -186,14 +173,13 @@ func (m *managerGame) handleNextFloor(
 func (m *managerGame) handlePrevFloor(
 	time time.Time, player *domain.Player, param string,
 ) error {
-	if player.FloorCurrent == domain.IndexFloorMin {
-		m.presenter.ShowMadeImpossible(
-			time, player.Id, int(domain.EventIncomingPrevFloor),
-		)
-		return fmt.Errorf("impossible move %d", domain.EventIncomingPrevFloor)
+	err := player.PrevFloor()
+	if err != nil {
+		idEvent := domain.EventIncomingPrevFloor
+		m.presenter.ShowMadeImpossible(time, player.Id, idEvent)
+		return fmt.Errorf("impossible move %d: %w", idEvent, err)
 	}
 
-	player.FloorCurrent--
 	m.presenter.ShowWentToFloorPrev(time, player.Id)
 	return nil
 }
@@ -201,14 +187,13 @@ func (m *managerGame) handlePrevFloor(
 func (m *managerGame) handleEnterBossFloor(
 	time time.Time, player *domain.Player, param string,
 ) error {
-	if player.FloorCurrent != m.config.CountFloors {
-		m.presenter.ShowMadeImpossible(
-			time, player.Id, int(domain.EventIncomingEnterBossFloor),
-		)
-		return fmt.Errorf("impossible move %d", domain.EventIncomingEnterBossFloor)
+	err := player.EnterBossFloor(time, m.config.CountFloors)
+	if err != nil {
+		idEvent := domain.EventIncomingEnterBossFloor
+		m.presenter.ShowMadeImpossible(time, player.Id, idEvent)
+		return fmt.Errorf("impossible move %d: %w", idEvent, err)
 	}
 
-	player.FloorBoss.TimeEnter = time
 	m.presenter.ShowEnteredFloorBoss(time, player.Id)
 	return nil
 }
@@ -216,19 +201,11 @@ func (m *managerGame) handleEnterBossFloor(
 func (m *managerGame) handleKillMonster(
 	time time.Time, player *domain.Player, param string,
 ) error {
-	countKilled := &(player.FloorsMonsters[player.FloorCurrent-1].MonstersKilled)
-	if *countKilled == m.config.CountMonstersPerFloors ||
-		player.FloorCurrent == m.config.CountFloors {
-		m.presenter.ShowMadeImpossible(
-			time, player.Id, int(domain.EventIncomingKillMonster),
-		)
-		return fmt.Errorf("impossible move %d", domain.EventIncomingKillMonster)
-	}
-
-	(*countKilled)++
-	if *countKilled == m.config.CountMonstersPerFloors {
-		player.FloorsMonsters[player.FloorCurrent-1].Floor.TimeClear = time
-		player.FloorsMonsters[player.FloorCurrent-1].Floor.Cleared = true
+	err := player.KillMonster(time, m.config.CountMonstersPerFloors, m.config.CountFloors)
+	if err != nil {
+		idEvent := domain.EventIncomingKillMonster
+		m.presenter.ShowMadeImpossible(time, player.Id, idEvent)
+		return fmt.Errorf("impossible move %d: %w", idEvent, err)
 	}
 
 	m.presenter.ShowKilledMonster(time, player.Id)
@@ -238,15 +215,13 @@ func (m *managerGame) handleKillMonster(
 func (m *managerGame) handleKillBoss(
 	time time.Time, player *domain.Player, param string,
 ) error {
-	if player.FloorBoss.Cleared || player.FloorCurrent != m.config.CountFloors {
-		m.presenter.ShowMadeImpossible(
-			time, player.Id, int(domain.EventIncomingKillBoss),
-		)
-		return fmt.Errorf("impossible move %d", domain.EventIncomingKillBoss)
+	err := player.KillBoss(time, m.config.CountFloors)
+	if err != nil {
+		idEvent := domain.EventIncomingKillBoss
+		m.presenter.ShowMadeImpossible(time, player.Id, idEvent)
+		return fmt.Errorf("impossible move %d: %w", idEvent, err)
 	}
 
-	player.FloorBoss.Cleared = true
-	player.FloorBoss.TimeClear = time
 	m.presenter.ShowKilledBoss(time, player.Id)
 	return nil
 }
@@ -272,12 +247,11 @@ func (m *managerGame) handleReceiveDamage(
 		return err
 	}
 
-	player.ReceiveDamage(damage)
+	player.ReceiveDamage(damage, time)
 	m.presenter.ShowReceivedDamage(time, player.Id, damage)
 
 	if player.State == domain.StatePlayerFail {
 		m.presenter.ShowDead(time, player.Id)
-		player.TimeLeaveDungeon = time
 	}
 
 	return nil
@@ -286,5 +260,7 @@ func (m *managerGame) handleReceiveDamage(
 func (m *managerGame) handleCannotContinue(
 	time time.Time, player *domain.Player, param string,
 ) error {
+	player.CannotContinue(time)
+	m.presenter.ShowCannotContinue(time, player.Id, param)
 	return nil
 }

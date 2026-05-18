@@ -62,7 +62,9 @@ func (p *presenterCLI) ShowCannotContinue(time time.Time, idPlayer int, reason s
 	)
 }
 
-func (p *presenterCLI) ShowMadeImpossible(time time.Time, idPlayer, idEvent int) {
+func (p *presenterCLI) ShowMadeImpossible(
+	time time.Time, idPlayer int, idEvent domain.EventIncomingID,
+) {
 	strTime := time.Format(p.formatTime)
 	fmt.Fprintf(p.out,
 		"[%s] Player [%d] makes imposible move [%d]\n", strTime, idPlayer, idEvent,

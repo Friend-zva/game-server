@@ -29,7 +29,7 @@ func run() error {
 
 	timeOpenAt, err := time.Parse(formatTime, cfg.OpenAt)
 	if err != nil {
-		return fmt.Errorf("cannot parse game config: %w", err)
+		return fmt.Errorf("failed to parse game config: %w", err)
 	}
 
 	configGame := domain.ConfigGame{
@@ -47,7 +47,7 @@ func run() error {
 	runner := clirunner.NewRunnerGame(logger, managerGame, formatTime)
 	err = runner.Execute(pathEvents)
 	if err != nil {
-		return fmt.Errorf("cannot run game: %w", err)
+		return fmt.Errorf("failed to run game: %w", err)
 	}
 
 	return nil

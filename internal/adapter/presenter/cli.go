@@ -20,99 +20,135 @@ func NewPresenterCLI(formatTime string, out io.Writer) *presenterCLI {
 	}
 }
 
-func (p *presenterCLI) ShowRegistered(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowRegistered(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] registered\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] registered\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowDisqualified(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowDisqualified(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] is disqualified\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] is disqualified\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowEnteredDungeon(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowEnteredDungeon(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] entered the dungeon\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] entered the dungeon\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowLeftDungeon(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowLeftDungeon(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] left the dungeon\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] left the dungeon\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowWentToFloorNext(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowWentToFloorNext(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] went to the next floor\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] went to the next floor\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowWentToFloorPrev(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowWentToFloorPrev(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] went to the previous floor\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] went to the previous floor\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowEnteredFloorBoss(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowEnteredFloorBoss(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] entered the boss's floor\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] entered the boss's floor\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowCannotContinue(time time.Time, idPlayer int, reason string) {
+func (p *presenterCLI) ShowCannotContinue(time time.Time, idPlayer int, reason string) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out,
+	_, err := fmt.Fprintf(p.out,
 		"[%s] Player [%d] cannot continue due to %s\n", strTime, idPlayer, reason,
 	)
+	return err
 }
 
 func (p *presenterCLI) ShowMadeImpossible(
 	time time.Time, idPlayer int, idEvent domain.EventIncomingID,
-) {
+) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out,
+	_, err := fmt.Fprintf(p.out,
 		"[%s] Player [%d] makes imposible move [%d]\n", strTime, idPlayer, idEvent,
 	)
+	return err
 }
 
-func (p *presenterCLI) ShowKilledMonster(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowKilledMonster(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] killed the monster\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] killed the monster\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowKilledBoss(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowKilledBoss(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] killed the boss\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] killed the boss\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowRestoredHealth(time time.Time, idPlayer int, amount int) {
+func (p *presenterCLI) ShowRestoredHealth(time time.Time, idPlayer int, amount int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out,
+	_, err := fmt.Fprintf(p.out,
 		"[%s] Player [%d] has restored [%d] of health\n", strTime, idPlayer, amount,
 	)
+	return err
 }
 
-func (p *presenterCLI) ShowReceivedDamage(time time.Time, idPlayer, amount int) {
+func (p *presenterCLI) ShowReceivedDamage(time time.Time, idPlayer, amount int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out,
+	_, err := fmt.Fprintf(p.out,
 		"[%s] Player [%d] recieved [%d] of damage\n", strTime, idPlayer, amount,
 	)
+	return err
 }
 
-func (p *presenterCLI) ShowDead(time time.Time, idPlayer int) {
+func (p *presenterCLI) ShowDead(time time.Time, idPlayer int) error {
 	strTime := time.Format(p.formatTime)
-	fmt.Fprintf(p.out, "[%s] Player [%d] is dead\n", strTime, idPlayer)
+	_, err := fmt.Fprintf(
+		p.out, "[%s] Player [%d] is dead\n", strTime, idPlayer,
+	)
+	return err
 }
 
-func (p *presenterCLI) ShowPreReportPlayer() {
-	fmt.Fprintf(p.out, "Final report:\n")
+func (p *presenterCLI) ShowPreReportPlayer() error {
+	_, err := fmt.Fprintf(p.out, "Final report:\n")
+	return err
 }
 
 func (p *presenterCLI) ShowReportPlayer(
 	state domain.StatePlayer, idPlayer int,
 	timeTotal, timeAvgFloor, timeBoss time.Duration,
 	health int,
-) {
-	fmt.Fprintf(p.out, "[%s] %d [%s, %s, %s] HP:%d\n", state, idPlayer,
+) error {
+	_, err := fmt.Fprintf(p.out, "[%s] %d [%s, %s, %s] HP:%d\n", state, idPlayer,
 		formatDuration(timeTotal), formatDuration(timeAvgFloor), formatDuration(timeBoss),
 		health,
 	)
+	return err
 }
 
 func formatDuration(d time.Duration) string {

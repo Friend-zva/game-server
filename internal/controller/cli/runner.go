@@ -16,7 +16,7 @@ type ManagerGame interface {
 	ProcessEvent(
 		time time.Time, idPlayer int, idEvent domain.EventIncomingID, param string,
 	) error
-	GenerateReport()
+	GenerateReport() error
 }
 
 type RunnerGame struct {
@@ -68,6 +68,10 @@ func (r *RunnerGame) scanFromReader(reader io.Reader) error {
 		}
 	}
 
-	r.manager.GenerateReport()
+	err := r.manager.GenerateReport()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

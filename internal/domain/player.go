@@ -18,7 +18,7 @@ type Player struct {
 }
 
 func NewPlayer(id, countFloors int) *Player {
-	floors := make([]FloorMonsters, countFloors - 1)
+	floors := make([]FloorMonsters, countFloors-1)
 
 	return &Player{
 		Id:               id,

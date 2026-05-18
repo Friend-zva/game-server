@@ -1,4 +1,4 @@
-name: Demo Application
+name: System Prototype
 
 on:
   workflow_dispatch:

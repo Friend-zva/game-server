@@ -38,7 +38,12 @@ func (p *parser) Run(pathEvents string) error {
 		p.logger.Error("failed to open events file", "error", err)
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			p.logger.Error("failed to close events file", "error", err)
+		}
+	}()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {

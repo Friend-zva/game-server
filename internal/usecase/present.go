@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"time"
+
+	domain "github.com/Friend-zva/game-server/internal/domain"
 )
 
 type Presenter interface {
@@ -19,4 +21,8 @@ type Presenter interface {
 	ShowDisqualified(time time.Time, idPlayer int)                  // 31
 	ShowDead(time time.Time, idPlayer int)                          // 32
 	ShowMadeImpossible(time time.Time, idPlayer, idEvent int)       // 33
+	ShowPreReportPlayer()
+	ShowReportPlayer(state domain.StatePlayer, idPlayer int,
+		timeTotal, timeAvgFloor, timeBoss time.Duration,
+		health int)
 }

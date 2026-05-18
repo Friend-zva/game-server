@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -81,6 +82,34 @@ func (m *managerGame) ProcessEvent(
 	return fmt.Errorf("handler not mapped")
 }
 
+func (m *managerGame) GenerateReport() {
+	players := m.storage.GetAll()
+
+	sort.Slice(players, func(i, j int) bool {
+		return players[i].Id < players[j].Id
+	})
+
+	m.presenter.ShowPreReportPlayer()
+
+	for _, p := range players {
+		timeTotal := p.TimeLeaveDungeon.Sub(p.TimeEnterDungeon)
+
+		timeAvgFloor := time.Duration(0)
+		for _, f := range p.FloorsMonsters {
+			if f.Floor.Cleared {
+				timeAvgFloor += f.Floor.TimeClear.Sub(f.Floor.TimeEnter)
+			}
+		}
+		timeAvgFloor /= time.Duration(m.config.CountFloors - 1)
+
+		timeBoss := p.FloorBoss.TimeClear.Sub(p.FloorBoss.TimeEnter)
+
+		m.presenter.ShowReportPlayer(
+			p.State, p.Id, timeTotal, timeAvgFloor, timeBoss, p.Health,
+		)
+	}
+}
+
 func (m *managerGame) handlerRegisterPlayer(
 	time time.Time, player *domain.Player, param string,
 ) error {
@@ -100,6 +129,7 @@ func (m *managerGame) handleEnterDungeon(
 	}
 
 	player.TimeEnterDungeon = time
+	player.FloorsMonsters[player.FloorCurrent-1].Floor.TimeEnter = time
 	m.presenter.ShowEnteredDungeon(time, player.Id)
 	return nil
 }
@@ -115,6 +145,13 @@ func (m *managerGame) handleLeaveDungeon(
 	}
 
 	player.TimeLeaveDungeon = time
+
+	if player.FloorBoss.Cleared {
+		player.State = domain.StatePlayerSuccess
+	} else {
+		player.State = domain.StatePlayerFail
+	}
+
 	m.presenter.ShowLeftDungeon(time, player.Id)
 	return nil
 }
@@ -130,9 +167,16 @@ func (m *managerGame) handleNextFloor(
 	}
 
 	player.FloorCurrent++
-	timeEnter := player.FloorsMonsters[player.FloorCurrent-1].Floor.TimeEnter
-	if timeEnter.IsZero() {
-		timeEnter = time
+	var floor *domain.Floor
+	if player.FloorCurrent != m.config.CountFloors {
+		floor = &(player.FloorsMonsters[player.FloorCurrent-1].Floor)
+	} else {
+		floor = &(player.FloorBoss)
+	}
+
+	timeEnter := &(floor.TimeEnter)
+	if (*timeEnter).IsZero() {
+		*timeEnter = time
 	}
 
 	m.presenter.ShowWentToFloorNext(time, player.Id)
@@ -172,16 +216,17 @@ func (m *managerGame) handleEnterBossFloor(
 func (m *managerGame) handleKillMonster(
 	time time.Time, player *domain.Player, param string,
 ) error {
-	countKilled := player.FloorsMonsters[player.FloorCurrent-1].MonstersKilled
-	if countKilled == m.config.CountMonstersPerFloors || player.FloorCurrent == m.config.CountFloors {
+	countKilled := &(player.FloorsMonsters[player.FloorCurrent-1].MonstersKilled)
+	if *countKilled == m.config.CountMonstersPerFloors ||
+		player.FloorCurrent == m.config.CountFloors {
 		m.presenter.ShowMadeImpossible(
 			time, player.Id, int(domain.EventIncomingKillMonster),
 		)
 		return fmt.Errorf("impossible move %d", domain.EventIncomingKillMonster)
 	}
 
-	countKilled++
-	if countKilled == m.config.CountMonstersPerFloors {
+	(*countKilled)++
+	if *countKilled == m.config.CountMonstersPerFloors {
 		player.FloorsMonsters[player.FloorCurrent-1].Floor.TimeClear = time
 		player.FloorsMonsters[player.FloorCurrent-1].Floor.Cleared = true
 	}
@@ -227,13 +272,12 @@ func (m *managerGame) handleReceiveDamage(
 		return err
 	}
 
-	event := player.ReceiveDamage(damage)
+	player.ReceiveDamage(damage)
 	m.presenter.ShowReceivedDamage(time, player.Id, damage)
 
-	for _, idOut := range event {
-		if domain.EventOutgoingID(idOut) == domain.EventOutgoingDead {
-			m.presenter.ShowDead(time, player.Id)
-		}
+	if player.State == domain.StatePlayerFail {
+		m.presenter.ShowDead(time, player.Id)
+		player.TimeLeaveDungeon = time
 	}
 
 	return nil

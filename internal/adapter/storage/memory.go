@@ -21,3 +21,11 @@ func (s *storageMemory) Get(id int) *domain.Player {
 func (s *storageMemory) Save(player *domain.Player) {
 	s.players[player.Id] = player
 }
+
+func (s *storageMemory) GetAll() []*domain.Player {
+	var players []*domain.Player
+	for _, player := range s.players {
+		players = append(players, player)
+	}
+	return players
+}

@@ -18,7 +18,7 @@ type Player struct {
 }
 
 func NewPlayer(id, countFloors int) *Player {
-	floors := make([]FloorMonsters, countFloors)
+	floors := make([]FloorMonsters, countFloors - 1)
 
 	return &Player{
 		Id:               id,
@@ -40,16 +40,11 @@ func (p *Player) RestoreHealth(amount int) {
 	}
 }
 
-func (p *Player) ReceiveDamage(amount int) []EventOutgoingID {
+func (p *Player) ReceiveDamage(amount int) {
 	p.Health -= amount
-
-	var events []EventOutgoingID
 
 	if p.Health <= 0 {
 		p.Health = 0
 		p.State = StatePlayerFail
-		events = append(events, EventOutgoingDead)
 	}
-
-	return events
 }

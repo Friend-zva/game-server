@@ -15,6 +15,7 @@ type ManagerGame interface {
 	ProcessEvent(
 		time time.Time, idPlayer int, idEvent domain.EventIncomingID, param string,
 	) error
+	GenerateReport()
 }
 
 type parser struct {
@@ -54,27 +55,27 @@ func (p *parser) Run(pathEvents string) error {
 			continue
 		}
 
-		rest := strings.Fields(parts[1])
-		if len(rest) < 2 {
-			p.logger.Error("failed to parse event", "error", err)
+		tokens := strings.Fields(parts[1])
+		if len(tokens) < 2 {
+			p.logger.Error("failed to parse event args", "error", err)
 			continue
 		}
 
-		idPlayer, err := strconv.Atoi(rest[0])
+		idPlayer, err := strconv.Atoi(tokens[0])
 		if err != nil {
 			p.logger.Error("failed to parse player id", "error", err)
 			continue
 		}
 
-		event, err := strconv.Atoi(rest[1])
+		event, err := strconv.Atoi(tokens[1])
 		if err != nil {
 			p.logger.Error("failed to parse event", "error", err)
 			continue
 		}
 
 		var param string
-		if len(rest) == 3 {
-			param = rest[2]
+		if len(tokens) >= 3 {
+			param = strings.Join(tokens[2:], " ")
 		}
 
 		idEvent := domain.EventIncomingID(event)
@@ -85,5 +86,6 @@ func (p *parser) Run(pathEvents string) error {
 		}
 	}
 
+	p.managerGame.GenerateReport()
 	return nil
 }

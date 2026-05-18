@@ -7,4 +7,5 @@ import (
 type Storage interface {
 	Get(id int) *domain.Player
 	Save(player *domain.Player)
+	GetAll() []*domain.Player
 }
